@@ -1,20 +1,27 @@
+
 #!/bin/bash
 
 set -e
 
-echo "🚀 Installing GooseRelayVPN..."
+echo "🚀 Cleaning up old versions..."
 
+systemctl stop goose-relay || true
+systemctl disable goose-relay || true
+
+rm -f /etc/systemd/system/goose-relay.service
+
+
+rm -rf /root/GooseRelayVPN-server-v1.4.1-linux-amd64
+rm -rf /root/GooseRelayVPN-server-v1.5.0-linux-amd64
+
+echo "📥 Downloading version v1.5.0..."
 cd /root
-
-echo "📥 Downloading..."
 wget -q https://github.com/Kianmhz/GooseRelayVPN/releases/download/v1.5.0/GooseRelayVPN-server-v1.5.0-linux-amd64.tar.gz
 
 echo "📦 Extracting..."
 tar -xzf GooseRelayVPN-server-v1.5.0-linux-amd64.tar.gz
 
 cd GooseRelayVPN-server-v1.5.0-linux-amd64
-
-
 chmod +x goose-server
 
 echo "🔑 Generating tunnel key..."
@@ -30,7 +37,6 @@ cat <<EOF > server_config.json
   "debug_timing": false
 }
 EOF
-
 
 echo "🛠 Creating systemd service..."
 cat <<EOF > /etc/systemd/system/goose-relay.service
@@ -51,14 +57,10 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 
-
 echo "🔄 Reloading systemd..."
 systemctl daemon-reload
-
-
 systemctl enable goose-relay
 systemctl start goose-relay
-
 
 echo "📊 Service status:"
 systemctl status goose-relay --no-pager
@@ -69,3 +71,4 @@ echo "-----------------------------------"
 echo "🔑 TUNNEL KEY: $TUNNEL_KEY"
 echo "🌐 TUNNEL URL: http://SERVER_IP:8443/tunnel"
 echo "-----------------------------------"
+
